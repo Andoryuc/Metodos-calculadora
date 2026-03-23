@@ -170,17 +170,58 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
     st.subheader("📊 Visualizador Gráfico")
     st.write("Usa GeoGebra para encontrar tus intervalos (a, b) o tu punto inicial (x0).")
     
-    with st.expander("Abrir Graficadora GeoGebra"):
-        iframe_geogebra = """
-        <iframe scrolling="no" 
-                title="GeoGebra Graphing Calculator" 
-                src="https://www.geogebra.org/graphing?embed" 
-                width="100%" 
-                height="500px" 
-                style="border: 1px solid #4B4B4B; border-radius: 8px;">
-        </iframe>
+    # 1. Creamos una memoria separada exclusiva para la graficadora
+    if 'ecuacion_geogebra' not in st.session_state:
+        st.session_state.ecuacion_geogebra = ""
+
+    col_btn, col_info = st.columns([1, 2])
+    with col_btn:
+        # 2. Botón de envío manual (Evita que GeoGebra colapse por cada tecla)
+        if st.button("📈 Enviar a GeoGebra", use_container_width=True):
+            st.session_state.ecuacion_geogebra = st.session_state.pantalla
+
+    # El expander se abre automáticamente si hay una ecuación enviada
+    with st.expander("Abrir Graficadora GeoGebra", expanded=True if st.session_state.ecuacion_geogebra else False):
+        
+        # Limpiamos los símbolos para que la API de Javascript de GeoGebra los entienda
+        eq_js = st.session_state.ecuacion_geogebra.replace("π", "pi").replace("√", "sqrt")
+        
+        # 3. Código mágico usando la API oficial (reemplaza tu antiguo iframe)
+        codigo_geogebra = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <script src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+        </head>
+        <body style="margin:0; padding:0;">
+            <div class="applet_container" id="ggb-element" style="width: 100%; height: 500px; border: 1px solid #4B4B4B; border-radius: 8px;"></div>
+            <script>
+                var params = {{
+                    "appName": "graphing", 
+                    "width": 800,
+                    "height": 500,
+                    "scaleContainerClass": "applet_container",
+                    "showToolBar": true, 
+                    "showAlgebraInput": true, 
+                    "showMenuBar": true,
+                    // Este es el evento que inyecta la ecuación cuando GeoGebra termina de cargar
+                    "appletOnLoad": function(api) {{
+                        var ecuacion = "{eq_js}";
+                        if(ecuacion.trim() !== "") {{
+                            api.evalCommand("f(x) = " + ecuacion);
+                        }}
+                    }}
+                }};
+                var applet = new GGBApplet(params, true);
+                window.addEventListener("load", function() {{ 
+                    applet.inject('ggb-element');
+                }});
+            </script>
+        </body>
+        </html>
         """
-        components.html(iframe_geogebra, height=500)
+        # Renderizamos el nuevo componente inteligente
+        components.html(codigo_geogebra, height=510)
         
     st.divider() # Otra línea para separar de los métodos
     # ==========================================
