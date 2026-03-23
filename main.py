@@ -162,14 +162,7 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
     if st.session_state.teclado_alternativo:
         # Mostramos un mensaje informativo con LaTeX para que se vea matemático
         st.info("💡 **Tip para raíces:** Para calcular una raíz distinta a la cuadrada, usa exponentes fraccionarios. \nPor ejemplo: ⁿ√( ...)^(m) = (...)^(m/n).")
-
-    st.divider() # Línea separadora
-    
-    # --- MENSAJES DE AYUDA (Solo en teclado alternativo) ---
-    if st.session_state.teclado_alternativo:
-        # Mostramos un mensaje informativo con LaTeX para que se vea matemático
-        st.info("💡 **Tip para raíces:** Para calcular una raíz distinta a la cuadrada, usa exponentes fraccionarios. \nPor ejemplo: ⁿ√( ...)^(m) = (...)^(m/n).")
-
+        
     st.divider() # Línea separadora
     
     # ==========================================
@@ -191,12 +184,6 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
         
     st.divider() # Otra línea para separar de los métodos
     # ==========================================
-
-    modo_app = st.radio(
-    "Selecciona metodo:", 
-    ["Bisección", "Newton", "Secante"], 
-    horizontal=True
-    )
 
     modo_app = st.radio(
     "Selecciona metodo:", 
