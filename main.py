@@ -1,5 +1,6 @@
 import streamlit as st
-import metodos as mt  # Aquí importamos tu motor matemático (asegúrate de que tu archivo se llame metodos.py)
+import metodos as mt
+import streamlit.components.v1 as components  # Aquí importamos tu motor matemático (asegúrate de que tu archivo se llame metodos.py)
 
 
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
@@ -164,6 +165,39 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
 
     st.divider() # Línea separadora
     
+    # --- MENSAJES DE AYUDA (Solo en teclado alternativo) ---
+    if st.session_state.teclado_alternativo:
+        # Mostramos un mensaje informativo con LaTeX para que se vea matemático
+        st.info("💡 **Tip para raíces:** Para calcular una raíz distinta a la cuadrada, usa exponentes fraccionarios. \nPor ejemplo: ⁿ√( ...)^(m) = (...)^(m/n).")
+
+    st.divider() # Línea separadora
+    
+    # ==========================================
+    # --- VISUALIZADOR GEOGEBRA (Global para Corte 1) ---
+    st.subheader("📊 Visualizador Gráfico")
+    st.write("Usa GeoGebra para encontrar tus intervalos (a, b) o tu punto inicial (x0).")
+    
+    with st.expander("Abrir Graficadora GeoGebra"):
+        iframe_geogebra = """
+        <iframe scrolling="no" 
+                title="GeoGebra Graphing Calculator" 
+                src="https://www.geogebra.org/graphing?embed" 
+                width="100%" 
+                height="500px" 
+                style="border: 1px solid #4B4B4B; border-radius: 8px;">
+        </iframe>
+        """
+        components.html(iframe_geogebra, height=500)
+        
+    st.divider() # Otra línea para separar de los métodos
+    # ==========================================
+
+    modo_app = st.radio(
+    "Selecciona metodo:", 
+    ["Bisección", "Newton", "Secante"], 
+    horizontal=True
+    )
+
     modo_app = st.radio(
     "Selecciona metodo:", 
     ["Bisección", "Newton", "Secante"], 
