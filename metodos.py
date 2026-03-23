@@ -3,57 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import asyncio
 
-while True:
-    input_seleccion_corte = input("Ingrese el corte (1, 2): ")
-    if input_seleccion_corte in ["1", "2"]:
-        break
-    print("Error: Ingrese entre los cortes 1 o 2")
-
-def numero_entero(texto):
-    while True:
-        try:
-            input_numero = int(input(texto))
-            return input_numero
-        except ValueError:
-            print("Ingrese solo numeros enteros")
-
-def numero_float(texto):
-    while True:
-        try:
-            input_numero = float(input(texto))
-            return input_numero
-        except ValueError:
-            print("Ingrese solo numeros")
-
-def numero_positivo(texto):
-    while True:
-        try:
-            input_numero = int(input(texto))
-            if input_numero >= 0:
-                return input_numero
-            else:
-                print("Error: Ingrese un numero entero positivo")
-        except ValueError:
-            print("Ingrese solo numeros enteros")
-
-def recoleccion_datos(texto):
-    input_cantidad_datos = numero_positivo(texto)
-
-    list_datos = []
-    for i in range(input_cantidad_datos):
-        list_borrador = []
-        input_datos_x = numero_float(f"Ingrese el {i+1} x: ")
-        input_datos_f_x = numero_float(f"Ingrese el {i+1} F(x): ")
-        list_borrador.append(input_datos_x)
-        list_borrador.append(input_datos_f_x)
-        list_datos.append(list_borrador)
-    return list_datos
+def recoleccion_datos(x: list, f_x: list):
+    # zip junta ambas listas paso a paso
+    return [list(par) for par in zip(x, f_x)]
 
 def preparar_ecuacion(texto_usuario):
     x = sp.symbols("x")
-    # Limpiamos y convertimos el texto que YA recibimos
+    
     input_limpio = texto_usuario.replace("^", "**")
-    f_expr = sp.sympify(input_limpio)
+    input_limpio = input_limpio.replace("√", "sqrt")
+    input_limpio = input_limpio.replace("π", "pi")
+    
+    # NUEVO: Diccionario que le enseña a SymPy el valor de 'e'
+    diccionario_simbolos = {"e": sp.E}
+    
+    # Le pasamos el diccionario usando el parámetro 'locals'
+    f_expr = sp.sympify(input_limpio, locals=diccionario_simbolos)
+    
     return f_expr, x
 
 def bissecion(f_expr, x, a, b, error_tol):
@@ -145,3 +111,118 @@ def secante(input_datoH1, input_datoH2, f_expr, x):
         if abs(f_val2) < 1e-10:
             return ctdr, dato2, f_val2
     return None, dato2, f_val2
+
+def puntos(list_datos, posicion, metodo):
+    #posicion 3 y 5 puntos
+    """
+    x      F(x)
+    t      v          dv/dt
+    0      1          
+    1      1.5
+    2      2
+    3      2.5
+    4      3
+    5      4
+
+    Punto central
+    F'(x) = (f(x+h) - F(x-h)) / 2h
+
+    F'(2) = (2.5-1.5)/2(1)
+
+
+    Derecha
+        forward
+    F(x) = (-3F(x) + 4F(x+h) + F(x+2h)) / 2h
+
+    Izquierda
+        Back
+    F(x) = (-3F(x) - 4F(x-h) + F(x-2h)) / 2h
+
+    5 puntos
+    (-F(x+2h) + 8F(x+h) - 8F(x-h) + F(x-2h)) / 12h
+    """
+    if len(list_datos) <=2:
+        return None, 0
+    
+    h = (list_datos[1][0] - list_datos[0][0])
+
+    if metodo == "central":
+        #formula = (f(x+h) - F(x-h)) / 2h
+        if posicion == 0 or posicion == len(list_datos) - 1:
+            return None, 1
+        soluccion = (list_datos[posicion + 1][1] - list_datos[posicion - 1][1]) / (2 * h)
+
+    elif metodo == "derecha":
+        #formula = (-3F(x) + 4F(x+h) + F(x+2h)) / 2h
+        if posicion + 2 > len(list_datos) - 1:
+            return None, 3
+        soluccion = (-3 * list_datos[posicion][1] + 4 * list_datos[posicion + 1][1] - list_datos[posicion + 2][1]) / (2 * h)
+
+    elif metodo == "izquierda":
+        #formula = (-3F(x) - 4F(x-h) + F(x-2h)) / 2h
+        if posicion - 2 <= -1:
+            return None, 2
+        soluccion = (3 * list_datos[posicion][1] - 4 * list_datos[posicion - 1][1] + list_datos[posicion - 2][1]) / (2 * h)
+
+    elif metodo == "5 puntos":
+        #formula = (-F(x+2h) + 8F(x+h) - 8F(x-h) + F(x-2h)) / 12h
+        if posicion - 2 <= -1 or posicion + 2 > len(list_datos) - 1:
+            return None, 4
+        soluccion = (-list_datos[posicion + 2][1] + 8 * list_datos[posicion + 1][1] - 8 * list_datos[posicion - 1][1] + list_datos[posicion - 2][1]) / (12 * h)
+
+    else:
+        return None, 5
+    
+    return soluccion, -1
+
+def trapecio(list_datos):
+    h = (list_datos[1][0] - list_datos[0][0]) / 2
+
+    sum = 0
+    for i in range(len(list_datos)):
+        sum += 2 * list_datos[i][1]
+    
+    sum = sum - list_datos[0][1] - list_datos[-1][1]
+
+    resultado = h * sum
+    return resultado
+
+def simpson(list_datos):
+    """
+    (h/3) (f(x0) + 4f(x1) + 2f(x2) + 4f(x3)+...... 4f
+    0    2
+    1    4
+    2    6
+    3    8
+    4    10
+    resultado = 24
+
+    6     120
+    8     350
+    10    620
+    12    820
+    14    760
+    16    500
+    18    200
+
+    x^3 = 64 de 0 a 4
+
+    n>= 4 y que sea de 2 a 2
+    """
+
+    #datos
+
+    h = (list_datos[1][0] - list_datos[0][0])
+
+    suma = 0
+    for i in range(1, len(list_datos) - 1):
+        if (i&1) == 0:
+            suma += 2*list_datos[i][1]
+        else:
+            suma += 4*list_datos[i][1]
+    
+    #ecuacion
+    #if input_seleccion == "ecuacion":
+
+    resultado = (h/3) * (list_datos[0][1] + suma + list_datos[-1][1])
+    return resultado
