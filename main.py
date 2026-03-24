@@ -46,7 +46,7 @@ st.markdown("""
 # --- 2. EL MENÚ PRINCIPAL ---
 modo_app = st.radio(
     "Selecciona tu modo de trabajo:", 
-    ["📐 Modo Ecuaciones (Raíces)", "📊 Modo Tabla de Datos (Integrales/Derivadas)"], 
+    ["📐 Antonio hpta", "📊 Modo Tabla de Datos (Integrales/Derivadas)"], 
     horizontal=True
 )
 
