@@ -46,7 +46,7 @@ st.markdown("""
 # --- 2. EL MENÚ PRINCIPAL ---
 modo_app = st.radio(
     "Selecciona tu modo de trabajo:", 
-    ["📐 Antonio hpta", "📊 Modo Tabla de Datos (Integrales/Derivadas)"], 
+    ["📐 Modo Ecuaciones (Raíces)", "📊 Modo Tabla de Datos (Integrales/Derivadas)"], 
     horizontal=True
 )
 
@@ -103,7 +103,7 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
 
     with col1:
         if not st.session_state.teclado_alternativo:
-            st.button(" ^ ", use_container_width=True, on_click=agregar_tecla, args=("^(",))
+            st.button(" a ", use_container_width=True, on_click=agregar_tecla, args=("^(",))
         else:
             st.button(" √ ", use_container_width=True, on_click=agregar_tecla, args=("√(",))
         st.button("7", use_container_width=True, on_click=agregar_tecla, args=("7",))
