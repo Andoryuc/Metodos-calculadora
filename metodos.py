@@ -1,7 +1,5 @@
 import sympy as sp
 import numpy as np
-import matplotlib.pyplot as plt
-import asyncio
 
 def recoleccion_datos(x: list, f_x: list):
     # zip junta ambas listas paso a paso
