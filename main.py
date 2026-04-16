@@ -84,7 +84,7 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
 
     # --- 4. LA PANTALLA ---
     # Usamos un cuadro de texto desactivado para que el usuario se vea obligado a usar los botones
-    st.text_input("Ecuación F(x)", key="pantalla", disabled=True)
+    st.text_input("Ecuación F(x)", key="pantalla", disabled=False)
 
     # --- 5. EL TECLADO ---
 
@@ -99,6 +99,7 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
         st.button("AC", on_click=limpiar_pantalla, use_container_width=True)
 
     # --- 6. EL TECLADO (Botones en columnas para móvil) ---
+  
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
