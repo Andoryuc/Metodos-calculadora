@@ -284,7 +284,7 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
                     expr, var_x = mt.preparar_ecuacion(st.session_state.pantalla)
                     
                     # 3. Calculamos (usando TU función)
-                    raiz, iteraciones = mt.newton(val_a, expr, var_x)
+                    raiz, df_val, iteraciones = mt.newton(val_a, expr, var_x)
                     
                     # 4. Mostramos resultados
                     
