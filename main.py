@@ -329,19 +329,44 @@ if modo_app == "📐 Modo Ecuaciones (Raíces)":
 #        MODO 2: TABLA DE DATOS (Corte 2)
 # ==========================================
 elif modo_app == "📊 Modo Tabla de Datos (Integrales/Derivadas)":
-    import pandas as pd # Importación necesaria para la tabla
+    import pandas as pd
     
     st.subheader("Análisis Numérico por Puntos")
-    st.write("Ingresa tus datos a continuación. Usa el botón '+' al final de la tabla para agregar más filas.")
+    st.write("Ingrese sus datos manualmente o importe un archivo Excel/CSV. El sistema asignará automáticamente la primera columna a X y la segunda a F(X).")
 
-    # 1. Memoria de la tabla (Iniciamos con 3 datos de ejemplo para que no dé error inmediato)
+    # 1. Memoria de la tabla (Iniciamos con datos base)
     if 'tabla_datos' not in st.session_state:
         st.session_state.tabla_datos = pd.DataFrame({
             "X": [0.0, 0.0, 0.0], 
             "F(X)": [0.0, 0.0, 0.0]
         })
 
-    # 2. El editor mágico de Streamlit
+    # --- NUEVO: MÓDULO DE IMPORTACIÓN EXCEL/CSV ---
+    archivo_subido = st.file_uploader("Importar datos (Archivo .xlsx o .csv con al menos 2 columnas)", type=["xlsx", "csv"])
+    
+    if archivo_subido is not None:
+        try:
+            # Detección y lectura del formato de archivo
+            if archivo_subido.name.endswith('.csv'):
+                df_importado = pd.read_csv(archivo_subido)
+            else:
+                df_importado = pd.read_excel(archivo_subido)
+            
+            # Verificación de dimensión estructural
+            if df_importado.shape[1] >= 2:
+                # Extracción estricta por índice de columna (iloc), ignorando encabezados originales
+                st.session_state.tabla_datos = pd.DataFrame({
+                    "X": df_importado.iloc[:, 0].tolist(),
+                    "F(X)": df_importado.iloc[:, 1].tolist()
+                })
+                st.success("Operación exitosa. Base de datos importada y reestructurada automáticamente.")
+            else:
+                st.error("Error: El archivo importado debe contener un mínimo de dos columnas numéricas.")
+        except Exception as e:
+            st.error(f"Error de lectura o compilación del archivo: {e}")
+    # ----------------------------------------
+
+    # 2. Editor interactivo de datos
     tabla_editada = st.data_editor(
         st.session_state.tabla_datos, 
         num_rows="dynamic", 
@@ -350,7 +375,7 @@ elif modo_app == "📊 Modo Tabla de Datos (Integrales/Derivadas)":
 
     st.divider()
 
-    # 3. Extracción automática de las columnas a listas de Python
+    # 3. Extracción de variables para procesamiento numérico
     lista_x = tabla_editada["X"].tolist()
     lista_fx = tabla_editada["F(X)"].tolist()
 
