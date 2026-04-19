@@ -400,19 +400,56 @@ elif modo_app == "📊 Modo Tabla de Datos (Integrales/Derivadas)":
 
     # --- LÓGICA DE INTEGRACIÓN ---
     elif categoria_metodo == "📉 Integración Numérica (Área)":
-        metodo_integral = st.selectbox("Selecciona el método de integración", ["Trapecio", "Simpson 1/3"])
         
-        if st.button("🚀 Calcular Integral", type="primary"):
-            datos_emparejados = mt.recoleccion_datos(lista_x, lista_fx)
+        # NUEVO: Submenú adaptado a tu estilo para elegir la fuente
+        origen_integral = st.radio(
+            "Selecciona la fuente de datos para la integral:", 
+            ["📊 Usar datos de la tabla", "📝 Usar una ecuación"], 
+            horizontal=True
+        )
+        
+        if origen_integral == "📊 Usar datos de la tabla":
+            metodo_integral = st.selectbox("Selecciona el método de integración", ["Trapecio", "Simpson 1/3"])
             
-            try:
-                if metodo_integral == "Trapecio":
-                    resultado = mt.trapecio(datos_emparejados)
-                    st.success(f"✅ El área aproximada (Trapecio) es: **{resultado:.6f}**")
+            if st.button("🚀 Calcular Integral", type="primary"):
+                datos_emparejados = mt.recoleccion_datos(lista_x, lista_fx)
+                
+                try:
+                    if metodo_integral == "Trapecio":
+                        resultado = mt.trapecio(datos_emparejados)
+                        st.success(f"✅ El área aproximada (Trapecio) es: **{resultado:.6f}**")
+                        
+                    elif metodo_integral == "Simpson 1/3":
+                        resultado = mt.simpson(datos_emparejados)
+                        st.success(f"✅ El área aproximada (Simpson 1/3) es: **{resultado:.6f}**")
+                        
+                except Exception as e:
+                    st.error(f"🚨 Hubo un error al calcular la integral. (Detalle: {e})")
                     
-                elif metodo_integral == "Simpson 1/3":
-                    resultado = mt.simpson(datos_emparejados)
-                    st.success(f"✅ El área aproximada (Simpson 1/3) es: **{resultado:.6f}**")
+        elif origen_integral == "📝 Usar una ecuación":
+            # INTERFAZ PARA INTEGRAR POR ECUACIÓN
+            ecuacion_int = st.text_input("Ingresa la función f(x):", "x^2 - 5x + 1")
+            
+            col_a, col_b, col_n = st.columns(3)
+            with col_a:
+                a_int = st.number_input("Límite inferior (a)", value=0.0)
+            with col_b:
+                b_int = st.number_input("Límite superior (b)", value=2.0)
+            with col_n:
+                n_int = st.number_input("Intervalos (n) [Debe ser par]", value=4, min_value=2, step=2)
+            
+            if st.button("🚀 Calcular Integral por Ecuación", type="primary"):
+                try:
+                    # Usamos tu misma función de preparación (ahora inteligente)
+                    expr, var_x = mt.preparar_ecuacion(ecuacion_int)
                     
-            except Exception as e:
-                st.error(f"🚨 Hubo un error al calcular la integral. (Detalle: {e})")
+                    # Llamamos a la nueva función de tu archivo metodos
+                    resultado, error = mt.simpson_ecuacion(expr, var_x, a_int, b_int, int(n_int))
+                    
+                    if error == -1:
+                        st.success(f"✅ El área bajo la curva (Simpson 1/3) es: **{resultado:.6f}**")
+                    else:
+                        st.error("🚨 Error: El número de intervalos (n) debe ser par.")
+                        
+                except Exception as e:
+                    st.error(f"🚨 Error en la ecuación. Revisa la sintaxis. (Detalle: {e})")

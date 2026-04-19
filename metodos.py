@@ -1,5 +1,7 @@
 import sympy as sp
 import numpy as np
+# NUEVO: Importaciones para que entienda el "5x" como "5*x"
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 def recoleccion_datos(x: list, f_x: list):
     # zip junta ambas listas paso a paso
@@ -12,11 +14,14 @@ def preparar_ecuacion(texto_usuario):
     input_limpio = input_limpio.replace("√", "sqrt")
     input_limpio = input_limpio.replace("π", "pi")
     
-    # NUEVO: Diccionario que le enseña a SymPy el valor de 'e'
+    # Diccionario que le enseña a SymPy el valor de 'e'
     diccionario_simbolos = {"e": sp.E}
     
-    # Le pasamos el diccionario usando el parámetro 'locals'
-    f_expr = sp.sympify(input_limpio, locals=diccionario_simbolos)
+    # NUEVO: Activamos la magia para que lea "5x"
+    transformaciones = standard_transformations + (implicit_multiplication_application,)
+    
+    # NUEVO: Usamos parse_expr con las transformaciones en lugar de sympify
+    f_expr = parse_expr(input_limpio, local_dict=diccionario_simbolos, transformations=transformaciones)
     
     return f_expr, x
 
@@ -224,3 +229,28 @@ def simpson(list_datos):
 
     resultado = (h/3) * (list_datos[0][1] + suma + list_datos[-1][1])
     return resultado
+
+def simpson_ecuacion(expresion, x, a, b, n):
+    """
+    Calcula la integral de una ecuación usando Simpson 1/3 analíticamente.
+    """
+    if n % 2 != 0:
+        return None, 1
+
+    h = (b - a) / n
+    f_a = float(expresion.subs(x, a))
+    f_b = float(expresion.subs(x, b))
+
+    suma = f_a + f_b
+
+    for i in range(1, n):
+        x_i = a + i * h
+        f_xi = float(expresion.subs(x, x_i))
+        
+        if i % 2 == 0:
+            suma += 2 * f_xi
+        else:
+            suma += 4 * f_xi
+
+    resultado = (h / 3) * suma
+    return resultado, -1
