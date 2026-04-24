@@ -46,7 +46,7 @@ st.markdown("""
 # --- 2. EL MENÚ PRINCIPAL ---
 modo_app = st.radio(
     "Selecciona tu modo de trabajo:", 
-    ["📐 Modo Ecuaciones (Raíces)", "📊 Modo Tabla de Datos (Integrales/Derivadas)"], 
+    ["📐 Modo Ecuaciones (Raíces)", "📊 Modo Tabla de Datos (Integrales/Derivadas)", "⚛️ Modo Cuántico (Matrices)"], 
     horizontal=True
 )
 
@@ -478,3 +478,84 @@ elif modo_app == "📊 Modo Tabla de Datos (Integrales/Derivadas)":
                         
                 except Exception as e:
                     st.error(f"🚨 Error en la ecuación. Revisa la sintaxis. (Detalle: {e})")
+
+# ==========================================
+#        MODO 3: CUÁNTICO (Regla de Fermi)
+# ==========================================
+elif modo_app == "⚛️ Modo Cuántico (Matrices)":
+    import pandas as pd
+    import numpy as np
+
+    st.subheader("⚛️ Cálculo Cuántico: Regla de Oro de Fermi")
+    st.write("Ingresa la Matriz del Hamiltoniano de perturbación ($H'$):")
+    
+    # 1. Matriz H' interactiva en memoria
+    if 'matriz_cuantica' not in st.session_state:
+        st.session_state.matriz_cuantica = pd.DataFrame({
+            "Col 1": [2.0, 0.0, 0.0],
+            "Col 2": [1.0, 3.0, 0.0],
+            "Col 3": [0.0, 2.0, 1.0]
+        })
+        
+    # El editor mágico donde puedes escribir los números de la matriz
+    tabla_H = st.data_editor(
+        st.session_state.matriz_cuantica, 
+        num_rows="dynamic", 
+        use_container_width=True
+    )
+    
+    st.divider()
+    st.write("Configuración de Vectores de Estado y Entorno")
+    
+    # Entradas para los vectores Bra y Ket
+    col_f, col_i = st.columns(2)
+    with col_f:
+        input_f = st.text_input("Vector Estado Final $\\langle f|$ (Separado por comas):", "0, 1, 0")
+    with col_i:
+        input_i = st.text_input("Vector Estado Inicial $| i \\rangle$ (Separado por comas):", "0, 0, 1")
+        
+    # Densidad y el interruptor (Toggle) de la constante
+    col_den, col_const = st.columns(2)
+    with col_den:
+        val_densidad = st.number_input("Densidad de Estados:", value=0.3, format="%.4f")
+    with col_const:
+        st.write("")
+        st.write("") # Espaciador para centrar verticalmente
+        usar_constante = st.checkbox("Incluir constante ($2\pi/\hbar$)")
+        
+    # EL BOTÓN DE ACCIÓN
+    if st.button("⚛️ Calcular Transición", type="primary"):
+        try:
+            # Limpiamos los textos para convertirlos en listas de Python
+            vec_f = [float(x.strip()) for x in input_f.split(",")]
+            vec_i = [float(x.strip()) for x in input_i.split(",")]
+            
+            # Sacamos la matriz de la tabla interactiva
+            matriz_H_list = tabla_H.values.tolist()
+            
+            # --- SEGURIDAD Y VALIDACIÓN DE TAMAÑOS ---
+            n_filas = len(matriz_H_list)
+            n_cols = len(matriz_H_list[0]) if n_filas > 0 else 0
+            
+            if n_filas != n_cols:
+                st.error("🚨 Error matemático: La matriz H' debe ser cuadrada (ej. 3x3 o 4x4).")
+            elif len(vec_f) != n_filas or len(vec_i) != n_cols:
+                st.error(f"🚨 Error matemático: Los vectores Bra y Ket deben tener exactamente {n_filas} posiciones para poder multiplicar con esta matriz.")
+            else:
+                # Todo está perfecto, llamamos a la función
+                elemento, m_cuadrado, resultado_final = mt.regla_fermi(matriz_H_list, vec_f, vec_i, val_densidad, usar_constante)
+                
+                # Resultados visuales impresionantes
+                st.success("✅ ¡Cálculo Matricial Exitoso!")
+                st.info(f"**Elemento de matriz $\\langle f | H' | i \\rangle$ :** {elemento:.4f}")
+                st.info(f"**Elemento al cuadrado $|M|^2$ :** {m_cuadrado:.4f}")
+                
+                if usar_constante:
+                    st.info(f"**Resultado de Probabilidad Final (Con $2\pi/\hbar$) :** {resultado_final:.4e}")
+                else:
+                    st.info(f"**Resultado de Probabilidad Final (Sin constante) :** {resultado_final:.4f}")
+                
+        except ValueError:
+            st.error("🚨 Error de formato. Asegúrate de ingresar los vectores solo con números separados por comas (Ejemplo: 0, 1, 0).")
+        except Exception as e:
+            st.error(f"🚨 Ocurrió un error inesperado al procesar las matrices: {e}")

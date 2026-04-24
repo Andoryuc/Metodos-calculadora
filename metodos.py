@@ -254,3 +254,36 @@ def simpson_ecuacion(expresion, x, a, b, n):
 
     resultado = (h / 3) * suma
     return resultado, -1
+
+# ==========================================
+#        NUEVO: MÓDULO CUÁNTICO (Corte 3)
+# ==========================================
+def regla_fermi(matriz_H_list, vec_f_list, vec_i_list, densidad, usar_constante=False):
+    """
+    Calcula la probabilidad de transición usando la Regla de Oro de Fermi.
+    <f| H' |i>
+    """
+    # Convertimos las listas a matrices de NumPy
+    H = np.array(matriz_H_list, dtype=float)
+    f = np.array(vec_f_list, dtype=float)
+    i = np.array(vec_i_list, dtype=float)
+    
+    # Elemento de matriz <f|H'|i> (Multiplicación matricial)
+    elemento_matriz = f @ H @ i
+    
+    # Elevamos al cuadrado el valor absoluto
+    M_cuadrado = np.abs(elemento_matriz)**2
+    
+    # Multiplicamos por la densidad
+    resultado_base = M_cuadrado * densidad
+    
+    # Si el usuario quiere la constante (2pi / h_bar)
+    if usar_constante:
+        # Nota: h_bar = 1.054571817e-34 (Puedes cambiar este valor según la unidad que uses)
+        h_bar = 1.054571817e-34 
+        factor_constante = (2 * np.pi) / h_bar
+        resultado_final = resultado_base * factor_constante
+    else:
+        resultado_final = resultado_base
+        
+    return float(elemento_matriz), float(M_cuadrado), float(resultado_final)
