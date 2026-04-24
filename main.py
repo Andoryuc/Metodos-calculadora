@@ -487,75 +487,68 @@ elif modo_app == "⚛️ Modo Cuántico (Matrices)":
     import numpy as np
 
     st.subheader("⚛️ Cálculo Cuántico: Regla de Oro de Fermi")
-    st.write("Ingresa la Matriz del Hamiltoniano de perturbación ($H'$):")
+    st.write("Configura el tamaño de tu Matriz del Hamiltoniano ($H'$):")
     
-    # 1. Matriz H' interactiva en memoria
-    if 'matriz_cuantica' not in st.session_state:
-        st.session_state.matriz_cuantica = pd.DataFrame({
-            "Col 1": [2.0, 0.0, 0.0],
-            "Col 2": [1.0, 3.0, 0.0],
-            "Col 3": [0.0, 2.0, 1.0]
-        })
+    # 1. CONTROLADORES DE TAMAÑO (Para agregar filas y columnas infinitas)
+    col_dim1, col_dim2 = st.columns(2)
+    with col_dim1:
+        n_filas = st.number_input("Número de Filas (N):", min_value=1, value=3, step=1)
+    with col_dim2:
+        n_cols = st.number_input("Número de Columnas (M):", min_value=1, value=3, step=1)
         
-    # El editor mágico donde puedes escribir los números de la matriz
-    tabla_H = st.data_editor(
-        st.session_state.matriz_cuantica, 
-        num_rows="dynamic", 
-        use_container_width=True
-    )
+    # 2. GENERACIÓN AUTOMÁTICA DE TABLAS (Reaccionan al tamaño)
+    # Matriz H' (N x M)
+    df_H_base = pd.DataFrame(0.0, index=[f"Fila {i+1}" for i in range(n_filas)], columns=[f"Col {j+1}" for j in range(n_cols)])
     
+    # Bra <f| (Debe tener tamaño N para multiplicar N filas)
+    df_f_base = pd.DataFrame(0.0, index=["<f|"], columns=[f"Pos {j+1}" for j in range(n_filas)])
+    
+    # Ket |i> (Debe tener tamaño M para multiplicar M columnas)
+    df_i_base = pd.DataFrame(0.0, index=[f"Pos {j+1}" for j in range(n_cols)], columns=["|i>"])
+
+    # 3. MOSTRAR LAS TABLAS PARA QUE EL USUARIO LAS LLENE
+    st.write("### 1. Matriz Hamiltoniano $H'$")
+    tabla_H = st.data_editor(df_H_base, use_container_width=True)
+    
+    st.write("### 2. Vectores de Estado (Tamaño automático)")
+    st.write(f"**Estado Final $\\langle f|$** (Vector Fila adaptado a {n_filas} posiciones):")
+    tabla_f = st.data_editor(df_f_base, use_container_width=True)
+    
+    st.write(f"**Estado Inicial $|i\\rangle$** (Vector Columna adaptado a {n_cols} posiciones):")
+    tabla_i = st.data_editor(df_i_base, use_container_width=True)
+
     st.divider()
-    st.write("Configuración de Vectores de Estado y Entorno")
+    st.write("### 3. Configuración del Entorno")
     
-    # Entradas para los vectores Bra y Ket
-    col_f, col_i = st.columns(2)
-    with col_f:
-        input_f = st.text_input("Vector Estado Final $\\langle f|$ (Separado por comas):", "0, 1, 0")
-    with col_i:
-        input_i = st.text_input("Vector Estado Inicial $| i \\rangle$ (Separado por comas):", "0, 0, 1")
-        
     # Densidad y el interruptor (Toggle) de la constante
     col_den, col_const = st.columns(2)
     with col_den:
         val_densidad = st.number_input("Densidad de Estados:", value=0.3, format="%.4f")
     with col_const:
         st.write("")
-        st.write("") # Espaciador para centrar verticalmente
+        st.write("") # Espaciador para centrar el botón
         usar_constante = st.checkbox("Incluir constante ($2\pi/\hbar$)")
         
-    # EL BOTÓN DE ACCIÓN
+    # 4. EL BOTÓN DE ACCIÓN
     if st.button("⚛️ Calcular Transición", type="primary"):
         try:
-            # Limpiamos los textos para convertirlos en listas de Python
-            vec_f = [float(x.strip()) for x in input_f.split(",")]
-            vec_i = [float(x.strip()) for x in input_i.split(",")]
-            
-            # Sacamos la matriz de la tabla interactiva
+            # Extraemos los valores de las tablas interactivas a listas de Python
             matriz_H_list = tabla_H.values.tolist()
+            vec_f = tabla_f.values.tolist()[0] # Extrae la única fila
+            vec_i = [val[0] for val in tabla_i.values.tolist()] # Extrae la única columna
             
-            # --- SEGURIDAD Y VALIDACIÓN DE TAMAÑOS ---
-            n_filas = len(matriz_H_list)
-            n_cols = len(matriz_H_list[0]) if n_filas > 0 else 0
+            # Todo está perfecto y validado por la interfaz, llamamos a tu función de metodos.py
+            elemento, m_cuadrado, resultado_final = mt.regla_fermi(matriz_H_list, vec_f, vec_i, val_densidad, usar_constante)
             
-            if n_filas != n_cols:
-                st.error("🚨 Error matemático: La matriz H' debe ser cuadrada (ej. 3x3 o 4x4).")
-            elif len(vec_f) != n_filas or len(vec_i) != n_cols:
-                st.error(f"🚨 Error matemático: Los vectores Bra y Ket deben tener exactamente {n_filas} posiciones para poder multiplicar con esta matriz.")
+            # Resultados
+            st.success("✅ ¡Cálculo Matricial Exitoso!")
+            st.info(f"**Elemento de matriz $\\langle f | H' | i \\rangle$ :** {elemento:.4f}")
+            st.info(f"**Elemento al cuadrado $|M|^2$ :** {m_cuadrado:.4f}")
+            
+            if usar_constante:
+                st.info(f"**Resultado de Probabilidad Final (Con $2\pi/\hbar$) :** {resultado_final:.4e}")
             else:
-                # Todo está perfecto, llamamos a la función
-                elemento, m_cuadrado, resultado_final = mt.regla_fermi(matriz_H_list, vec_f, vec_i, val_densidad, usar_constante)
+                st.info(f"**Resultado de Probabilidad Final (Sin constante) :** {resultado_final:.4f}")
                 
-                # Resultados visuales impresionantes
-                st.success("✅ ¡Cálculo Matricial Exitoso!")
-                st.info(f"**Elemento de matriz $\\langle f | H' | i \\rangle$ :** {elemento:.4f}")
-                st.info(f"**Elemento al cuadrado $|M|^2$ :** {m_cuadrado:.4f}")
-                
-                if usar_constante:
-                    st.info(f"**Resultado de Probabilidad Final (Con $2\pi/\hbar$) :** {resultado_final:.4e}")
-                else:
-                    st.info(f"**Resultado de Probabilidad Final (Sin constante) :** {resultado_final:.4f}")
-                
-        except ValueError:
-            st.error("🚨 Error de formato. Asegúrate de ingresar los vectores solo con números separados por comas (Ejemplo: 0, 1, 0).")
         except Exception as e:
             st.error(f"🚨 Ocurrió un error inesperado al procesar las matrices: {e}")
